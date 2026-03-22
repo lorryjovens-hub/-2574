@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影视详情 - 影视天堂</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo">
+            <span class="logo-icon">🎬</span>
+            <span>影视天堂</span>
+        </a>
+        <div class="header-right">
+            <div class="source-selector">
+                <select id="sourceSelector"></select>
+            </div>
+            <a href="settings.html" class="settings-btn">
+                <span>⚙️</span>
+                <span>设置</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="detail-container">
+        <div class="container">
+            <div class="detail-header" id="detailHeader">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+            <div class="episode-section" id="episodeSection" style="display: none;">
+                <h3 class="section-title">选集播放</h3>
+                <div class="source-tabs" id="sourceTabs"></div>
+                <div class="episode-grid" id="episodeGrid"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>本站资源来自互联网，仅供学习交流使用</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        let videoId = null;
+        let currentSource = null;
+        let videoData = null;
+        let playSources = [];
+        let currentSourceIndex = 0;
+
+        async function init() {
+            videoId = getUrlParam('id');
+            if (!videoId) {
+                showError('缺少视频ID');
+                return;
+            }
+
+            currentSource = SourceManager.getCurrentSource();
+            await loadVideoDetail();
+        }
+
+        async function loadVideoDetail() {
+            const header = document.getElementById('detailHeader');
+            
+            try {
+                const data = await Api.getVideoDetail(currentSource, videoId);
+                
+                if (data.list && data.list.length > 0) {
+                    videoData = data.list[0];
+                    document.title = videoData.vod_name + ' - 影视天堂';
+                    renderDetail();
+                    parseAndRenderEpisodes();
+                } else {
+                    showError('未找到该影视');
+                }
+            } catch (error) {
+                console.error('加载详情失败:', error);
+                showError('加载失败，请重试');
+            }
+        }
+
+        function renderDetail() {
+            const header = document.getElementById('detailHeader');
+            
+            header.innerHTML = `
+                <div class="detail-poster">
+                    <img src="${videoData.vod_pic || ''}" alt="${videoData.vod_name}" 
+                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 300%22><rect fill=%22%231f1f1f%22 width=%22200%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2260%22>🎬</text></svg>'">
+                </div>
+                <div class="detail-info">
+                    <h1 class="detail-title">${videoData.vod_name}</h1>
+                    <div class="detail-meta">
+                        <div class="detail-meta-item">
+                            <span>📺</span>
+                            <span>${videoData.type_name || '未知分类'}</span>
+                        </div>
+                        <div class="detail-meta-item">
+                            <span>🎬</span>
+                            <span>${videoData.vod_director || '未知导演'}</span>
+                        </div>
+                        <div class="detail-meta-item">
+                            <span>⏰</span>
+                            <span>${videoData.vod_time || ''}</span>
+                        </div>
+                        ${videoData.vod_remarks ? `
+                        <div class="detail-meta-item">
+                            <span>📝</span>
+                            <span>${videoData.vod_remarks}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="detail-desc">
+                        <p>${videoData.vod_content || '暂无剧情简介'}</p>
+                    </div>
+                    <div class="detail-actors">
+                        <h3>演员</h3>
+                        <p>${videoData.vod_actor || '暂无演员信息'}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function parseAndRenderEpisodes() {
+            if (!videoData.vod_play_from || !videoData.vod_play_url) {
+                document.getElementById('episodeSection').style.display = 'none';
+                return;
+            }
+
+            playSources = VideoParser.parsePlaySources(videoData.vod_play_from, videoData.vod_play_url);
+            
+            if (playSources.length === 0) {
+                document.getElementById('episodeSection').style.display = 'none';
+                return;
+            }
+
+            playSources = VideoParser.sortSourcesByM3u8(playSources);
+            
+            document.getElementById('episodeSection').style.display = 'block';
+            renderSourceTabs();
+            renderEpisodes(0);
+        }
+
+        function renderSourceTabs() {
+            const tabs = document.getElementById('sourceTabs');
+            tabs.innerHTML = playSources.map((source, index) => `
+                <button class="source-tab ${index === 0 ? 'active' : ''}" 
+                        onclick="selectSource(${index})">
+                    ${source.name}
+                    ${source.isM3u8 ? '<span style="color: #28a745; font-size: 12px;">✓</span>' : ''}
+                </button>
+            `).join('');
+        }
+
+        function selectSource(index) {
+            currentSourceIndex = index;
+            
+            document.querySelectorAll('.source-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+            
+            renderEpisodes(index);
+        }
+
+        function renderEpisodes(sourceIndex) {
+            const grid = document.getElementById('episodeGrid');
+            const source = playSources[sourceIndex];
+            
+            if (!source || !source.episodes || source.episodes.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-muted);">暂无播放源</p>';
+                return;
+            }
+
+            grid.innerHTML = source.episodes.map((ep, index) => `
+                <button class="episode-btn" onclick="playEpisode(${sourceIndex}, ${index})">
+                    ${ep.name}
+                </button>
+            `).join('');
+        }
+
+        function playEpisode(sourceIndex, episodeIndex) {
+            const source = playSources[sourceIndex];
+            const episode = source.episodes[episodeIndex];
+            
+            const playerUrl = `player.html?id=${videoId}&ep=${episodeIndex}&source=${sourceIndex}`;
+            window.location.href = playerUrl;
+        }
+
+        function showError(message) {
+            const header = document.getElementById('detailHeader');
+            header.innerHTML = `
+                <div class="empty-state" style="width: 100%;">
+                    <div class="icon">😢</div>
+                    <h3>${message}</h3>
+                    <a href="index.html" style="color: var(--primary-color); margin-top: 15px; display: inline-block;">返回首页</a>
+                </div>
+            `;
+        }
+
+        init();
+    </script>
+</body>
+</html>

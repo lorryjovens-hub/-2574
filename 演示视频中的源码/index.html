@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影视天堂 - 免费在线观看</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo">
+            <span class="logo-icon">🎬</span>
+            <span>影视天堂</span>
+        </a>
+        <div class="header-right">
+            <div class="source-selector">
+                <select id="sourceSelector"></select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索影视...">
+                <button onclick="handleSearch()">搜索</button>
+            </div>
+            <a href="settings.html" class="settings-btn">
+                <span>⚙️</span>
+                <span>设置</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="container">
+            <nav class="category-nav" id="categoryNav">
+                <button class="category-btn active" data-id="0">全部</button>
+            </nav>
+
+            <h2 class="section-title" id="sectionTitle">最新影视</h2>
+
+            <div class="video-grid" id="videoGrid"></div>
+
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>本站资源来自互联网，仅供学习交流使用</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        let currentCategory = 0;
+        let currentPage = 1;
+        let categories = [];
+        let currentSource = null;
+
+        async function init() {
+            currentSource = SourceManager.getCurrentSource();
+            
+            const pageFromUrl = getUrlParam('page');
+            const categoryFromUrl = getUrlParam('category');
+            const searchFromUrl = getUrlParam('wd');
+            
+            if (pageFromUrl) currentPage = parseInt(pageFromUrl);
+            if (categoryFromUrl) currentCategory = parseInt(categoryFromUrl);
+            
+            if (searchFromUrl) {
+                document.getElementById('searchInput').value = searchFromUrl;
+                await handleSearch();
+            } else {
+                await loadCategories();
+                await loadVideos();
+            }
+        }
+
+        async function reloadAll() {
+            currentSource = SourceManager.getCurrentSource();
+            currentCategory = 0;
+            currentPage = 1;
+            categories = [];
+            
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sectionTitle').textContent = '最新影视';
+            
+            const url = new URL(window.location);
+            url.searchParams.delete('category');
+            url.searchParams.delete('page');
+            url.searchParams.delete('wd');
+            history.pushState({}, '', url);
+            
+            await loadCategories();
+            await loadVideos();
+        }
+
+        async function loadCategories() {
+            try {
+                const data = await Api.getVideoList(currentSource, { ac: 'list', pg: 1 });
+                
+                if (data.class && data.class.length > 0) {
+                    categories = data.class;
+                    renderCategories();
+                } else {
+                    renderCategories();
+                }
+            } catch (error) {
+                console.error('加载分类失败:', error);
+                renderCategories();
+            }
+        }
+
+        function renderCategories() {
+            const nav = document.getElementById('categoryNav');
+            let html = '<button class="category-btn ' + (currentCategory === 0 ? 'active' : '') + '" data-id="0" onclick="selectCategory(0)">全部</button>';
+            
+            categories.forEach(cat => {
+                html += '<button class="category-btn ' + (currentCategory === cat.type_id ? 'active' : '') + '" data-id="' + cat.type_id + '" onclick="selectCategory(' + cat.type_id + ')">' + cat.type_name + '</button>';
+            });
+            
+            nav.innerHTML = html;
+        }
+
+        function selectCategory(categoryId) {
+            currentCategory = categoryId;
+            currentPage = 1;
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.dataset.id) === categoryId) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            const categoryName = categoryId === 0 ? '最新影视' : (categories.find(c => c.type_id === categoryId)?.type_name || '影视列表');
+            document.getElementById('sectionTitle').textContent = categoryName;
+            
+            const url = new URL(window.location);
+            url.searchParams.set('category', categoryId);
+            url.searchParams.set('page', 1);
+            url.searchParams.delete('wd');
+            history.pushState({}, '', url);
+            
+            loadVideos();
+        }
+
+        async function loadVideos() {
+            const grid = document.getElementById('videoGrid');
+            UI.showLoading(grid);
+            
+            try {
+                let data;
+                if (currentCategory > 0) {
+                    data = await Api.getVideosByCategory(currentSource, currentCategory, currentPage);
+                } else {
+                    data = await Api.getVideoList(currentSource, { pg: currentPage });
+                }
+                
+                if (data.list && data.list.length > 0) {
+                    renderVideoList(data.list);
+                    UI.renderPagination(
+                        parseInt(data.page) || currentPage,
+                        parseInt(data.pagecount) || 1,
+                        parseInt(data.total) || 0
+                    );
+                    
+                    loadPostersAsync(data.list);
+                } else {
+                    UI.showEmpty(grid, '暂无影视数据');
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('加载视频列表失败:', error);
+                UI.showError(grid, '加载失败，请检查数据源配置');
+            }
+        }
+
+        function renderVideoList(videos) {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = videos.map(video => UI.renderVideoCard(video)).join('');
+        }
+
+        async function loadPostersAsync(videos) {
+            for (const video of videos) {
+                UI.loadPosterAsync(video.vod_id, currentSource);
+            }
+        }
+
+        async function handleSearch() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                loadVideos();
+                return;
+            }
+            
+            const grid = document.getElementById('videoGrid');
+            UI.showLoading(grid);
+            document.getElementById('sectionTitle').textContent = `搜索: ${keyword}`;
+            
+            try {
+                const data = await Api.searchVideos(currentSource, keyword);
+                
+                if (data.list && data.list.length > 0) {
+                    renderVideoList(data.list);
+                    document.getElementById('pagination').innerHTML = '';
+                    loadPostersAsync(data.list);
+                    
+                    const url = new URL(window.location);
+                    url.searchParams.set('wd', keyword);
+                    url.searchParams.delete('category');
+                    url.searchParams.delete('page');
+                    history.pushState({}, '', url);
+                } else {
+                    UI.showEmpty(grid, `未找到 "${keyword}" 相关影视`);
+                }
+            } catch (error) {
+                console.error('搜索失败:', error);
+                UI.showError(grid, '搜索失败，请重试');
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        window.addEventListener('popstate', function() {
+            const pageFromUrl = getUrlParam('page');
+            const categoryFromUrl = getUrlParam('category');
+            const searchFromUrl = getUrlParam('wd');
+            
+            currentPage = pageFromUrl ? parseInt(pageFromUrl) : 1;
+            currentCategory = categoryFromUrl ? parseInt(categoryFromUrl) : 0;
+            
+            if (searchFromUrl) {
+                document.getElementById('searchInput').value = searchFromUrl;
+                handleSearch();
+            } else {
+                loadVideos();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

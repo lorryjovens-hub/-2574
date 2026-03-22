@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理 - 影视爆米花</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary-color: #e50914; --secondary-color: #141414; --bg-color: #0a0a0a; --card-bg: #1a1a1a; --text-color: #ffffff; --text-secondary: #b3b3b3; --border-color: #333; --hover-color: #2a2a2a; --success-color: #46d369; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: var(--bg-color); color: var(--text-color); min-height: 100vh; line-height: 1.6; }
+        .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-box { background: var(--card-bg); border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .login-box h1 { text-align: center; margin-bottom: 30px; color: var(--primary-color); font-size: 28px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); font-size: 14px; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary-color); outline: none; }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: #f40612; }
+        .btn-secondary { background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-block { width: 100%; }
+        .admin-container { display: none; }
+        .admin-container.active { display: block; }
+        .admin-header { background: rgba(0,0,0,0.95); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-color); }
+        .admin-logo { font-size: 20px; font-weight: bold; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
+        .admin-user { display: flex; align-items: center; gap: 15px; }
+        .admin-content { display: flex; min-height: calc(100vh - 60px); }
+        .admin-sidebar { width: 240px; background: var(--secondary-color); padding: 20px 0; border-right: 1px solid var(--border-color); }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: var(--text-secondary); text-decoration: none; border-left: 3px solid transparent; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: rgba(229, 9, 20, 0.1); color: var(--primary-color); border-left-color: var(--primary-color); }
+        .admin-main { flex: 1; padding: 20px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h2 { font-size: 24px; margin-bottom: 8px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .form-actions { display: flex; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--bg-color); color: var(--text-secondary); font-size: 13px; }
+        tr:hover { background: var(--hover-color); }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .status-active { background: rgba(70, 211, 105, 0.2); color: var(--success-color); }
+        .status-inactive { background: rgba(179, 179, 179, 0.2); color: var(--text-secondary); }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; z-index: 9999; display: none; }
+        .toast.success { background: var(--success-color); }
+        .toast.error { background: #dc3545; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--card-bg); border-radius: 12px; padding: 30px; width: 100%; max-width: 500px; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .modal-close { background: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+        .action-btns { display: flex; gap: 8px; }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1><i class="fas fa-lock"></i> 后台登录</h1>
+            <form id="loginForm">
+                <div class="form-group"><label>用户名</label><input type="text" id="loginUsername" required></div>
+                <div class="form-group"><label>密码</label><input type="password" id="loginPassword" required></div>
+                <button type="submit" class="btn btn-primary btn-block">登录</button>
+            </form>
+            <div style="margin-top:20px;text-align:center;color:var(--text-secondary);font-size:13px;">
+                <p>首次使用？请创建管理员账号</p>
+                <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="showCreateAdmin()">创建管理员</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-container" id="adminContainer">
+        <header class="admin-header">
+            <div class="admin-logo"><i class="fas fa-cog"></i><span>后台管理</span></div>
+            <div class="admin-user"><span id="adminUsername">管理员</span><button class="btn btn-secondary btn-sm" onclick="logout()">退出</button></div>
+        </header>
+        <div class="admin-content">
+            <aside class="admin-sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> 控制面板</a></li>
+                    <li><a href="#" data-page="site"><i class="fas fa-globe"></i> 网站设置</a></li>
+                    <li><a href="#" data-page="seo"><i class="fas fa-search"></i> SEO 设置</a></li>
+                    <li><a href="#" data-page="sources"><i class="fas fa-database"></i> 数据源管理</a></li>
+                    <li><a href="#" data-page="pages"><i class="fas fa-file-alt"></i> 页面内容</a></li>
+                    <li><a href="#" data-page="feedback"><i class="fas fa-comments"></i> 用户反馈</a></li>
+                </ul>
+            </aside>
+            <main class="admin-main">
+                <section class="page-section active" id="pageDashboard">
+                    <div class="page-header"><h2>控制面板</h2><p>欢迎回来</p></div>
+                    <div class="card">
+                        <div class="card-header"><h3>系统信息</h3></div>
+                        <table>
+                            <tr><td>网站名称</td><td id="infoSiteName">-</td></tr>
+                            <tr><td>数据源数量</td><td id="infoSourceCount">0</td></tr>
+                            <tr><td>状态</td><td><span class="status-badge status-active">运行中</span></td></tr>
+                        </table>
+                    </div>
+                </section>
+                <section class="page-section" id="pageSite">
+                    <div class="page-header"><h2>网站设置</h2></div>
+                    <div class="card">
+                        <form id="siteForm">
+                            <div class="form-row">
+                                <div class="form-group"><label>网站名称</label><input type="text" id="siteName"></div>
+                                <div class="form-group"><label>公司名称</label><input type="text" id="companyName"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Logo URL</label><input type="text" id="logoUrl"></div>
+                                <div class="form-group"><label>ICP 备案号</label><input type="text" id="icpNumber"></div>
+                            </div>
+                            <div class="form-group"><label>页脚文字</label><textarea id="footerText"></textarea></div>
+                            <div class="form-actions"><button type="submit" class="btn btn-primary">保存</button></div>
+                        </form>
+                    </div>
+                </section>
+                <section class="page-section" id="pageSeo">
+                    <div class="page-header"><h2>SEO 设置</h2></div>
+                    <div class="card">
+                        <form id="seoForm">
+                            <div class="form-group"><label>关键词</label><input type="text" id="siteKeywords"></div>
+                            <div class="form-group"><label>描述</label><textarea id="siteDescription"></textarea></div>
+                            <div class="form-actions"><button type="submit" class="btn btn-primary">保存</button></div>
+                        </form>
+                    </div>
+                </section>
+                <section class="page-section" id="pageSources">
+                    <div class="page-header"><h2>数据源管理</h2></div>
+                    <div class="card">
+                        <div class="card-header"><h3>数据源列表</h3><button class="btn btn-primary btn-sm" onclick="showAddSource()">添加</button></div>
+                        <table>
+                            <thead><tr><th>名称</th><th>地址</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody id="sourceTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="page-section" id="pageFeedback">
+                    <div class="page-header"><h2>用户反馈</h2></div>
+                    <div class="card">
+                        <div class="card-header"><h3>反馈列表</h3>
+                            <select id="feedbackStatusFilter" onchange="loadFeedbacks()" style="padding:8px;background:var(--bg-color);border:1px solid var(--border-color);border-radius:5px;color:var(--text-color);">
+                                <option value="all">全部</option><option value="pending">待处理</option><option value="processed">已处理</option>
+                            </select>
+                        </div>
+                        <table>
+                            <thead><tr><th>ID</th><th>用户</th><th>类型</th><th>内容</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+                            <tbody id="feedbackTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="page-section" id="pagePages">
+                    <div class="page-header"><h2>页面内容</h2></div>
+                    <div class="card">
+                        <form id="pagesForm">
+                            <div class="form-group"><label>关于我们</label><textarea id="aboutUs"></textarea></div>
+                            <div class="form-group"><label>联系我们</label><textarea id="contactUs"></textarea></div>
+                            <div class="form-actions"><button type="submit" class="btn btn-primary">保存</button></div>
+                        </form>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal" id="sourceModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="sourceModalTitle">添加数据源</h3><button class="modal-close" onclick="closeSourceModal()">&times;</button></div>
+            <form id="sourceForm">
+                <input type="hidden" id="sourceId">
+                <div class="form-group"><label>名称</label><input type="text" id="sourceName" required></div>
+                <div class="form-group"><label>地址</label><input type="text" id="sourceUrl" required></div>
+                <div class="form-group"><label><input type="checkbox" id="sourceActive"> 启用</label></div>
+                <div class="form-actions"><button type="button" class="btn btn-secondary" onclick="closeSourceModal()">取消</button><button type="submit" class="btn btn-primary">保存</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="createAdminModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>创建管理员</h3><button class="modal-close" onclick="closeCreateAdminModal()">&times;</button></div>
+            <form id="createAdminForm">
+                <div class="form-group"><label>用户名</label><input type="text" id="newAdminUsername" required></div>
+                <div class="form-group"><label>密码</label><input type="password" id="newAdminPassword" required></div>
+                <div class="form-group"><label>邮箱</label><input type="email" id="newAdminEmail"></div>
+                <div class="form-group"><label>密钥</label><input type="text" id="adminSecretKey" required><small style="color:var(--text-secondary)">默认：popcorn2024admin</small></div>
+                <div class="form-actions"><button type="button" class="btn btn-secondary" onclick="closeCreateAdminModal()">取消</button><button type="submit" class="btn btn-primary">创建</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_URL = '/api';
+        let currentToken = localStorage.getItem('adminToken');
+        
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        async function request(endpoint, options = {}) {
+            if (!options.headers) options.headers = {};
+            options.headers['Content-Type'] = 'application/json';
+            if (currentToken) options.headers['Authorization'] = `Bearer ${currentToken}`;
+            
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`, options);
+                const data = await res.json();
+                if (res.status === 401 || data.message === '请先登录管理员账号') {
+                    logout();
+                    throw new Error('未登录');
+                }
+                return data;
+            } catch (e) {
+                console.error(e);
+                throw e;
+            }
+        }
+
+        async function checkLogin() {
+            if (!currentToken) {
+                showLogin();
+                return;
+            }
+            try {
+                const data = await request('/admin/check');
+                if (data.success) {
+                    document.getElementById('adminUsername').textContent = data.data.username;
+                    showAdmin();
+                    loadData();
+                } else {
+                    showLogin();
+                }
+            } catch (e) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('adminContainer').classList.remove('active');
+        }
+
+        function showAdmin() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('adminContainer').classList.add('active');
+        }
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value;
+            const p = document.getElementById('loginPassword').value;
+            try {
+                const data = await request('/admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
+                if (data.success) {
+                    currentToken = data.data.token;
+                    localStorage.setItem('adminToken', currentToken);
+                    document.getElementById('adminUsername').textContent = data.data.user.username;
+                    showToast('登录成功');
+                    showAdmin();
+                    loadData();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (e) {
+                showToast('登录失败', 'error');
+            }
+        };
+
+        function logout() {
+            currentToken = null;
+            localStorage.removeItem('adminToken');
+            showLogin();
+        }
+
+        function showCreateAdmin() { document.getElementById('createAdminModal').classList.add('active'); }
+        function closeCreateAdminModal() { document.getElementById('createAdminModal').classList.remove('active'); }
+
+        document.getElementById('createAdminForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('newAdminUsername').value;
+            const p = document.getElementById('newAdminPassword').value;
+            const email = document.getElementById('newAdminEmail').value;
+            const secret = document.getElementById('adminSecretKey').value;
+            
+            try {
+                const data = await request('/admin/create-admin', { method: 'POST', body: JSON.stringify({ username: u, password: p, email, secret_key: secret }) });
+                if (data.success) {
+                    showToast('管理员创建成功，请登录');
+                    closeCreateAdminModal();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (e) {
+                showToast('创建失败', 'error');
+            }
+        };
+
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.onclick = (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+                document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                document.getElementById(`page${e.currentTarget.dataset.page.charAt(0).toUpperCase() + e.currentTarget.dataset.page.slice(1)}`).classList.add('active');
+            };
+        });
+
+        async function loadData() {
+            loadConfig();
+            loadSources();
+            loadFeedbacks();
+        }
+
+        async function loadConfig() {
+            const data = await request('/config');
+            if (data.success && data.data) {
+                const c = data.data;
+                document.getElementById('infoSiteName').textContent = c.site_name;
+                
+                document.getElementById('siteName').value = c.site_name || '';
+                document.getElementById('companyName').value = c.company_name || '';
+                document.getElementById('logoUrl').value = c.logo_url || '';
+                document.getElementById('icpNumber').value = c.icp_number || '';
+                document.getElementById('footerText').value = c.footer_text || '';
+                
+                document.getElementById('siteKeywords').value = c.site_keywords || '';
+                document.getElementById('siteDescription').value = c.site_description || '';
+                
+                document.getElementById('aboutUs').value = c.about_us || '';
+                document.getElementById('contactUs').value = c.contact_us || '';
+            }
+        }
+
+        document.getElementById('siteForm').onsubmit = saveConfig;
+        document.getElementById('seoForm').onsubmit = saveConfig;
+        document.getElementById('pagesForm').onsubmit = saveConfig;
+
+        async function saveConfig(e) {
+            e.preventDefault();
+            const config = {
+                site_name: document.getElementById('siteName').value,
+                company_name: document.getElementById('companyName').value,
+                logo_url: document.getElementById('logoUrl').value,
+                icp_number: document.getElementById('icpNumber').value,
+                footer_text: document.getElementById('footerText').value,
+                site_keywords: document.getElementById('siteKeywords').value,
+                site_description: document.getElementById('siteDescription').value,
+                about_us: document.getElementById('aboutUs').value,
+                contact_us: document.getElementById('contactUs').value
+            };
+            
+            try {
+                const data = await request('/admin/config', { method: 'POST', body: JSON.stringify(config) });
+                if (data.success) {
+                    showToast('保存成功');
+                    loadConfig();
+                } else showToast('保存失败', 'error');
+            } catch (e) {
+                showToast('请求失败', 'error');
+            }
+        }
+
+        async function loadSources() {
+            const data = await request('/sources');
+            if (data.success) {
+                document.getElementById('infoSourceCount').textContent = data.data.length;
+                const tbody = document.getElementById('sourceTableBody');
+                tbody.innerHTML = data.data.map(s => `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.url}</td>
+                        <td><span class="status-badge ${s.is_active ? 'status-active' : 'status-inactive'}">${s.is_active ? '启用' : '禁用'}</span></td>
+                        <td class="action-btns">
+                            <button class="btn btn-sm btn-secondary" onclick="editSource(${s.id}, '${s.name}', '${s.url}', ${s.is_active})">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSource(${s.id})">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function showAddSource() {
+            document.getElementById('sourceId').value = '';
+            document.getElementById('sourceName').value = '';
+            document.getElementById('sourceUrl').value = '';
+            document.getElementById('sourceActive').checked = true;
+            document.getElementById('sourceModalTitle').textContent = '添加数据源';
+            document.getElementById('sourceModal').classList.add('active');
+        }
+
+        function editSource(id, name, url, active) {
+            document.getElementById('sourceId').value = id;
+            document.getElementById('sourceName').value = name;
+            document.getElementById('sourceUrl').value = url;
+            document.getElementById('sourceActive').checked = active;
+            document.getElementById('sourceModalTitle').textContent = '编辑数据源';
+            document.getElementById('sourceModal').classList.add('active');
+        }
+
+        function closeSourceModal() { document.getElementById('sourceModal').classList.remove('active'); }
+
+        document.getElementById('sourceForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('sourceId').value;
+            const body = {
+                name: document.getElementById('sourceName').value,
+                url: document.getElementById('sourceUrl').value,
+                is_active: document.getElementById('sourceActive').checked ? 1 : 0
+            };
+            
+            try {
+                const method = id ? 'PUT' : 'POST';
+                const endpoint = id ? `/sources/${id}` : '/sources';
+                const data = await request(endpoint, { method, body: JSON.stringify(body) });
+                if (data.success) {
+                    showToast('保存成功');
+                    closeSourceModal();
+                    loadSources();
+                } else showToast(data.message, 'error');
+            } catch (e) {
+                showToast('保存失败', 'error');
+            }
+        };
+
+        async function deleteSource(id) {
+            if (!confirm('确定要删除吗？')) return;
+            try {
+                const data = await request(`/sources/${id}`, { method: 'DELETE' });
+                if (data.success) {
+                    showToast('删除成功');
+                    loadSources();
+                } else showToast(data.message, 'error');
+            } catch (e) { showToast('删除失败', 'error'); }
+        }
+
+        async function loadFeedbacks() {
+            try {
+                const data = await request('/feedback');
+                if (data.success) {
+                    const filter = document.getElementById('feedbackStatusFilter').value;
+                    let list = data.data;
+                    if (filter !== 'all') {
+                        list = list.filter(f => f.status === filter);
+                    }
+                    
+                    const tbody = document.getElementById('feedbackTableBody');
+                    tbody.innerHTML = list.map(f => `
+                        <tr>
+                            <td>${f.id}</td>
+                            <td>${f.username}</td>
+                            <td>${f.type}</td>
+                            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.content}">${f.content}</td>
+                            <td><span class="status-badge ${f.status === 'pending' ? 'status-inactive' : 'status-active'}">${f.status === 'pending' ? '待处理' : '已处理'}</span></td>
+                            <td>${new Date(f.created_at).toLocaleDateString()}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-sm btn-secondary" onclick="processFeedback(${f.id}, '${f.status}')">${f.status === 'pending' ? '标记处理' : '重置'}</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteFeedback(${f.id})">删除</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {}
+        }
+
+        async function processFeedback(id, currentStatus) {
+            try {
+                const newStatus = currentStatus === 'pending' ? 'processed' : 'pending';
+                const data = await request(`/feedback/${id}`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
+                if (data.success) {
+                    showToast('状态更新成功');
+                    loadFeedbacks();
+                }
+            } catch (e) { showToast('更新失败', 'error'); }
+        }
+
+        async function deleteFeedback(id) {
+            if (!confirm('确定要删除此反馈吗？')) return;
+            try {
+                const data = await request(`/feedback/${id}`, { method: 'DELETE' });
+                if (data.success) {
+                    showToast('删除成功');
+                    loadFeedbacks();
+                }
+            } catch (e) { showToast('删除失败', 'error'); }
+        }
+
+        window.onload = checkLogin;
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "movie-site",
+  "version": "1.0.0",
+  "description": "影视网站跨域代理服务",
+  "main": "proxy-server.js",
+  "scripts": {
+    "start": "node proxy-server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.19.0",
+    "node-fetch": "^2.7.0",
+    "sql.js": "^1.14.1"
+  }
+}

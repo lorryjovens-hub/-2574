@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="keywords" id="metaKeywords" content="影视,电影,电视剧,综艺,动漫,在线观看">
+    <meta name="description" id="metaDescription" content="影视爆米花 - 免费在线观看最新电影、电视剧、综艺、动漫">
+    <title id="pageTitle">影视爆米花 - 免费在线观看</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo">
+            <i class="fas fa-film"></i>
+            <span id="siteNameDisplay">影视爆米花</span>
+        </a>
+        <div class="header-right">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索影片...">
+                <button class="search-btn" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="user-area" id="userArea">
+                <button class="settings-btn" id="loginBtn">
+                    <i class="fas fa-user"></i>
+                    <span>登录</span>
+                </button>
+            </div>
+            <button class="settings-btn" id="settingsBtn">
+                <i class="fas fa-database"></i>
+                <span>数据源</span>
+            </button>
+            <a href="admin.html" target="_blank" class="settings-btn" style="text-decoration: none;">
+                <i class="fas fa-lock"></i>
+                <span>管理后台</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <nav class="category-nav">
+            <ul class="category-list" id="categoryList">
+                <li class="category-item active" data-type="">全部</li>
+            </ul>
+        </nav>
+
+        <div class="content-area">
+            <h2 class="section-title" id="sectionTitle">最新影片</h2>
+            
+            <div class="video-grid" id="videoGrid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">加载中...</div>
+                </div>
+            </div>
+
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-database"></i> 数据源管理</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0; font-size: 14px; color: var(--text-secondary);">数据源列表</h4>
+                    <button class="btn btn-primary btn-sm" onclick="showAddSource()">
+                        <i class="fas fa-plus"></i> 添加数据源
+                    </button>
+                </div>
+                <div class="source-list" id="sourceList"></div>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <h4 style="margin-bottom: 10px; font-size: 14px; color: var(--text-secondary);">接口格式说明</h4>
+                    <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
+                        <p><strong>苹果 CMS V10 标准接口：</strong></p>
+                        <p>列表接口：<code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px;">域名/api.php/provide/vod/?ac=list</code></p>
+                        <p>详情接口：<code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px;">域名/api.php/provide/vod/?ac=detail</code></p>
+                        <p style="margin-top: 8px;"><strong>注意：</strong>只需填写域名部分，系统会自动拼接接口路径</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="sourceModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="sourceModalTitle">添加数据源</h3>
+                <button class="modal-close" id="closeSourceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sourceForm">
+                    <input type="hidden" id="sourceId">
+                    <div class="form-group">
+                        <label>数据源名称</label>
+                        <input type="text" id="sourceName" placeholder="例如：闪电资源" required>
+                    </div>
+                    <div class="form-group">
+                        <label>接口域名</label>
+                        <input type="text" id="sourceUrl" placeholder="https://example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="sourceActive" checked>
+                            <span>启用此数据源</span>
+                        </label>
+                    </div>
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="cancelSourceBtn" style="flex: 1;">取消</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="authTitle">登录</h3>
+                <button class="modal-close" id="closeAuthModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-tab="login">登录</div>
+                    <div class="auth-tab" data-tab="register">注册</div>
+                </div>
+                
+                <form id="loginForm" class="auth-form">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="width:100%;">登录</button>
+                    </div>
+                </form>
+                
+                <form id="registerForm" class="auth-form" style="display:none;">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="regUsername" placeholder="3-20个字符" required>
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱 <span style="color:var(--text-secondary);font-size:12px;">(选填)</span></label>
+                        <input type="email" id="regEmail" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="regPassword" placeholder="至少6个字符" required>
+                    </div>
+                    <div class="form-group">
+                        <label>确认密码</label>
+                        <input type="password" id="regPassword2" placeholder="再次输入密码" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="width:100%;">注册</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">个人中心</h3>
+                <button class="modal-close" id="closeUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-info">
+                    <div class="user-avatar" id="displayUserAvatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-name" id="displayUsername"></div>
+                </div>
+                
+                <div class="user-menu">
+                    <a href="#" class="user-menu-item" id="profileBtn">
+                        <i class="fas fa-user-cog"></i>
+                        <span>个人资料</span>
+                    </a>
+                    <a href="#" class="user-menu-item" id="favoritesBtn">
+                        <i class="fas fa-heart"></i>
+                        <span>我的收藏</span>
+                    </a>
+                    <a href="#" class="user-menu-item" id="historyBtn">
+                        <i class="fas fa-history"></i>
+                        <span>观看历史</span>
+                    </a>
+                    <a href="#" class="user-menu-item" id="feedbackBtn">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>意见反馈</span>
+                    </a>
+                </div>
+                
+                <div id="userContent"></div>
+                
+                <div class="form-actions" style="margin-top:20px;">
+                    <button class="btn btn-secondary" id="logoutBtn" style="width:100%;">
+                        <i class="fas fa-sign-out-alt"></i> 退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-comment-dots"></i> 意见反馈</h3>
+                <button class="modal-close" id="closeFeedbackModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="feedbackForm">
+                    <div class="form-group">
+                        <label>反馈类型</label>
+                        <select id="feedbackType" style="width: 100%; padding: 12px 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); font-size: 14px;">
+                            <option value="suggestion">功能建议</option>
+                            <option value="bug">问题反馈</option>
+                            <option value="content">资源问题</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>联系方式 (选填)</label>
+                        <input type="text" id="feedbackContact" placeholder="邮箱或手机号，方便我们回复您">
+                    </div>
+                    <div class="form-group">
+                        <label>反馈内容 <span style="color: var(--text-secondary); font-size: 12px;">*</span></label>
+                        <textarea id="feedbackContent" placeholder="请详细描述您的问题或建议..." style="width: 100%; padding: 12px 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); font-size: 14px; min-height: 150px; resize: vertical;" required></textarea>
+                    </div>
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="cancelFeedbackBtn" style="flex: 1;">取消</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">提交反馈</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer class="footer">
+        <p id="footerText">影视爆米花 - 本站资源来自互联网，仅供学习交流使用</p>
+        <p id="icpNumber" style="font-size: 12px; margin-top: 5px; opacity: 0.7;"></p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        const UserAPI = {
+            baseUrl: '/api/user.php',
+            
+            async request(action, data = {}, method = 'POST') {
+                const url = `${this.baseUrl}?action=${action}`;
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                };
+                
+                if (method !== 'GET' && Object.keys(data).length > 0) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(url, options);
+                return await response.json();
+            },
+            
+            async login(username, password) {
+                return await this.request('login', { username, password });
+            },
+            
+            async register(username, password, email) {
+                return await this.request('register', { username, password, email });
+            },
+            
+            async logout() {
+                return await this.request('logout');
+            },
+            
+            async checkLogin() {
+                return await this.request('check', {}, 'GET');
+            },
+            
+            async getFavorites() {
+                return await this.request('favorites', {}, 'GET');
+            },
+            
+            async addFavorite(videoId, videoName) {
+                return await this.request('favorites', { video_id: videoId, video_name: videoName });
+            },
+            
+            async removeFavorite(videoId) {
+                return await this.request('favorites', { video_id: videoId }, 'DELETE');
+            },
+            
+            async getHistory() {
+                return await this.request('history', {}, 'GET');
+            },
+            
+            async addHistory(videoId, videoName, episode) {
+                return await this.request('history', { video_id: videoId, video_name: videoName, episode });
+            },
+            
+            async getProfile() {
+                return await this.request('get_profile');
+            },
+            
+            async updateProfile(nickname, bio, avatar) {
+                return await this.request('update_profile', { nickname, bio, avatar });
+            }
+        };
+
+        let currentPage = 1;
+        let currentType = '';
+        let currentKeyword = '';
+        let totalPages = 1;
+        let editingSourceId = null;
+        let currentUser = null;
+
+        function init() {
+            loadSiteConfig();
+            checkServerStatus();
+            checkLoginStatus();
+            checkAndInitData();
+            bindEvents();
+        }
+
+        async function loadSiteConfig() {
+            try {
+                const response = await fetch('api/config');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const config = result.data;
+                    
+                    if (config.site_name) {
+                        document.getElementById('siteNameDisplay').textContent = config.site_name;
+                        document.getElementById('pageTitle').textContent = config.site_name + ' - 免费在线观看';
+                    }
+                    
+                    if (config.site_keywords) {
+                        document.getElementById('metaKeywords').content = config.site_keywords;
+                    }
+                    
+                    if (config.site_description) {
+                        document.getElementById('metaDescription').content = config.site_description;
+                    }
+                    
+                    if (config.footer_text) {
+                        document.getElementById('footerText').textContent = config.site_name + ' - ' + config.footer_text;
+                    }
+                    
+                    if (config.icp_number) {
+                        document.getElementById('icpNumber').textContent = config.icp_number;
+                    }
+                }
+            } catch (error) {
+                console.error('加载网站配置失败:', error);
+            }
+        }
+
+        async function checkLoginStatus() {
+            try {
+                const result = await UserAPI.checkLogin();
+                if (result.success && result.data) {
+                    currentUser = result.data;
+                    updateUserUI();
+                }
+            } catch (e) {
+                console.log('未登录');
+            }
+        }
+
+        function updateUserUI() {
+            const userArea = document.getElementById('userArea');
+            if (currentUser) {
+                const avatarUrl = currentUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.username) + '&background=random&color=fff&size=32';
+                userArea.innerHTML = `
+                    <button class="settings-btn" id="userBtn" style="padding: 4px 12px 4px 4px; border-radius: 20px;">
+                        <img src="${avatarUrl}" alt="avatar" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">
+                        <span style="margin-left: 4px;">${currentUser.nickname || currentUser.username}</span>
+                    </button>
+                `;
+                document.getElementById('userBtn').addEventListener('click', openUserModal);
+            } else {
+                userArea.innerHTML = `
+                    <button class="settings-btn" id="loginBtn">
+                        <i class="fas fa-user"></i>
+                        <span>登录</span>
+                    </button>
+                `;
+                document.getElementById('loginBtn').addEventListener('click', openAuthModal);
+            }
+        }
+
+        async function checkAndInitData() {
+            await API.loadSources();
+            const sources = API.getSources();
+            if (sources.length === 0) {
+                showNoSourceGuide();
+                openSettings();
+            } else {
+                loadCategories();
+                loadVideos();
+            }
+        }
+
+        function showNoSourceGuide() {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <div class="empty-icon"><i class="fas fa-database"></i></div>
+                    <div class="empty-text" style="font-size: 18px; margin-bottom: 15px;">请先配置数据源</div>
+                    <div class="empty-text" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                        请进入后台管理添加苹果CMS V10标准接口数据源
+                    </div>
+                    <a href="admin.html" target="_blank" class="btn btn-primary" style="padding: 12px 30px; display: inline-block;">
+                        <i class="fas fa-cog"></i> 进入后台管理
+                    </a>
+                </div>
+            `;
+            document.getElementById('categoryList').innerHTML = '<li class="category-item active" data-type="">全部</li>';
+            document.getElementById('pagination').innerHTML = '';
+        }
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('http://localhost:3001/api/config');
+                if (!response.ok) {
+                    showToast('代理服务未启动，请先运行 npm start', 'error');
+                }
+            } catch (error) {
+                showToast('代理服务未启动，请先运行 npm start', 'error');
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const categories = await API.getCategories();
+                renderCategories(categories);
+            } catch (error) {
+                console.error('加载分类失败:', error);
+            }
+        }
+
+        function renderCategories(categories) {
+            const categoryList = document.getElementById('categoryList');
+            let html = '<li class="category-item active" data-type="">全部</li>';
+            
+            categories.forEach(cat => {
+                html += `<li class="category-item" data-type="${cat.type_id}">${cat.type_name}</li>`;
+            });
+            
+            categoryList.innerHTML = html;
+            
+            categoryList.querySelectorAll('.category-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    categoryList.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    currentType = item.dataset.type;
+                    currentPage = 1;
+                    currentKeyword = '';
+                    document.getElementById('searchInput').value = '';
+                    updateSectionTitle();
+                    loadVideos();
+                });
+            });
+        }
+
+        function updateSectionTitle() {
+            const title = document.getElementById('sectionTitle');
+            const activeItem = document.querySelector('.category-item.active');
+            if (activeItem && activeItem.dataset.type) {
+                title.textContent = activeItem.textContent;
+            } else if (currentKeyword) {
+                title.textContent = `搜索: ${currentKeyword}`;
+            } else {
+                title.textContent = '最新影片';
+            }
+        }
+
+        async function loadVideos() {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">加载中...</div>
+                </div>
+            `;
+
+            try {
+                const data = await API.getVideoList(currentPage, currentType || null, currentKeyword || null);
+                
+                console.log('API返回数据:', data);
+                
+                let videoList = [];
+                let pageCount = 1;
+                
+                if (data.code === 1 && data.list && data.list.length > 0) {
+                    videoList = data.list;
+                    pageCount = data.pagecount || 1;
+                } else if (data.list && data.list.length > 0) {
+                    videoList = data.list;
+                    pageCount = data.pagecount || 1;
+                } else if (Array.isArray(data)) {
+                    videoList = data;
+                }
+                
+                if (videoList.length > 0) {
+                    totalPages = pageCount;
+                    renderVideos(videoList);
+                    renderPagination();
+                } else {
+                    const errorMsg = data.msg || (data.code !== undefined ? `错误码: ${data.code}` : '暂无数据');
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fas fa-film"></i></div>
+                            <div class="empty-text">${data.code === 1 ? '暂无数据' : errorMsg}</div>
+                            ${!API.getActiveSource() ? '<div style="margin-top:10px;"><a href="admin.html" target="_blank" class="btn btn-primary" style="padding:10px 20px;">去后台配置数据源</a></div>' : ''}
+                        </div>
+                    `;
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('加载视频失败:', error);
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="empty-text">加载失败: ${error.message}</div>
+                        <div style="margin-top:15px; color: var(--text-secondary); font-size: 13px;">
+                            请检查数据源是否可用，或尝试切换其他数据源
+                        </div>
+                    </div>
+                `;
+                document.getElementById('pagination').innerHTML = '';
+            }
+        }
+
+        function renderVideos(videos) {
+            const grid = document.getElementById('videoGrid');
+            let html = '';
+            
+            videos.forEach(video => {
+                html += `
+                    <a href="detail.html?id=${video.vod_id}" class="video-card">
+                        <div class="video-poster" id="poster-${video.vod_id}" style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);">
+                            <div class="loading-spinner" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+                        </div>
+                        <div class="video-overlay">
+                            <div class="play-icon"><i class="fas fa-play"></i></div>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-name">${video.vod_name}</div>
+                            <div class="video-remarks">${video.vod_remarks || '更新中'}</div>
+                            <div class="video-type">${video.type_name || ''}</div>
+                        </div>
+                    </a>
+                `;
+            });
+            
+            grid.innerHTML = html;
+            
+            videos.forEach(video => {
+                loadVideoPoster(video.vod_id);
+            });
+        }
+
+        async function loadVideoPoster(videoId) {
+            try {
+                const data = await API.getVideoDetail(videoId);
+                if (data.list && data.list[0] && data.list[0].vod_pic) {
+                    const posterEl = document.getElementById(`poster-${videoId}`);
+                    if (posterEl) {
+                        const proxyUrl = API.getProxyImageUrl(data.list[0].vod_pic);
+                        posterEl.innerHTML = `<img src="${proxyUrl}" alt="" class="video-poster" onerror="this.style.display='none'">`;
+                    }
+                }
+            } catch (error) {
+                console.error('加载海报失败:', error);
+            }
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            let html = '';
+            
+            html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(1)">首页</button>`;
+            html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">上一页</button>`;
+            
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            
+            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">下一页</button>`;
+            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${totalPages})">末页</button>`;
+            
+            html += `<span class="page-info">第 ${currentPage}/${totalPages} 页</span>`;
+            
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages || page === currentPage) return;
+            currentPage = page;
+            loadVideos();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function bindEvents() {
+            document.getElementById('searchBtn').addEventListener('click', handleSearch);
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+            
+            document.getElementById('settingsBtn').addEventListener('click', openSettings);
+            document.getElementById('closeModal').addEventListener('click', closeSettings);
+            
+            document.getElementById('settingsModal').addEventListener('click', (e) => {
+                if (e.target.id === 'settingsModal') closeSettings();
+            });
+            
+            document.getElementById('closeAuthModal').addEventListener('click', closeAuthModal);
+            document.getElementById('authModal').addEventListener('click', (e) => {
+                if (e.target.id === 'authModal') closeAuthModal();
+            });
+            
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabName = tab.dataset.tab;
+                    document.getElementById('loginForm').style.display = tabName === 'login' ? 'block' : 'none';
+                    document.getElementById('registerForm').style.display = tabName === 'register' ? 'block' : 'none';
+                    document.getElementById('authTitle').textContent = tabName === 'login' ? '登录' : '注册';
+                });
+            });
+            
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            document.getElementById('closeUserModal').addEventListener('click', closeUserModal);
+            document.getElementById('userModal').addEventListener('click', (e) => {
+                if (e.target.id === 'userModal') closeUserModal();
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('favoritesBtn').addEventListener('click', showFavorites);
+            document.getElementById('historyBtn').addEventListener('click', showHistory);
+            document.getElementById('profileBtn').addEventListener('click', showProfile);
+            
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', openAuthModal);
+            }
+        }
+
+        function handleSearch() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (keyword) {
+                currentKeyword = keyword;
+                currentType = '';
+                currentPage = 1;
+                
+                document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+                document.querySelector('.category-item[data-type=""]').classList.add('active');
+                
+                updateSectionTitle();
+                loadVideos();
+            }
+        }
+
+        function openSettings() {
+            renderSourceList();
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function openAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showToast('请输入用户名和密码', 'error');
+                return;
+            }
+            
+            try {
+                const result = await UserAPI.login(username, password);
+                if (result.success) {
+                    currentUser = result.data;
+                    updateUserUI();
+                    closeAuthModal();
+                    showToast('登录成功', 'success');
+                } else {
+                    showToast(result.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                showToast('登录失败，请稍后重试', 'error');
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const password2 = document.getElementById('regPassword2').value;
+            
+            if (!username || !password) {
+                showToast('请填写用户名和密码', 'error');
+                return;
+            }
+            
+            if (password !== password2) {
+                showToast('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            try {
+                const result = await UserAPI.register(username, password, email);
+                if (result.success) {
+                    currentUser = result.data;
+                    updateUserUI();
+                    closeAuthModal();
+                    showToast('注册成功', 'success');
+                } else {
+                    showToast(result.message || '注册失败', 'error');
+                }
+            } catch (error) {
+                showToast('注册失败，请稍后重试', 'error');
+            }
+        }
+
+        function openUserModal() {
+            document.getElementById('displayUsername').textContent = currentUser.nickname || currentUser.username;
+            const avatarUrl = currentUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.username) + '&background=random&color=fff&size=60';
+            document.getElementById('displayUserAvatar').innerHTML = `<img src="${avatarUrl}" alt="avatar" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">`;
+            document.getElementById('userContent').innerHTML = '';
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+        }
+
+        async function handleLogout() {
+            try {
+                await UserAPI.logout();
+                currentUser = null;
+                updateUserUI();
+                closeUserModal();
+                showToast('已退出登录', 'success');
+            } catch (error) {
+                showToast('退出失败', 'error');
+            }
+        }
+
+        async function showFavorites(e) {
+            if (e) e.preventDefault();
+            const content = document.getElementById('userContent');
+            content.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+            
+            try {
+                const result = await UserAPI.getFavorites();
+                if (result.success && result.data && result.data.length > 0) {
+                    let html = '<div class="user-video-list">';
+                    result.data.forEach(item => {
+                        html += `
+                            <div class="user-list-item">
+                                <a href="detail.html?id=${item.video_id}" class="user-list-thumb">
+                                    <img src="${API.getProxyImageUrl(item.video_pic)}" alt="${item.video_name}" onerror="this.style.display='none'">
+                                </a>
+                                <div class="user-list-info">
+                                    <a href="detail.html?id=${item.video_id}" class="user-list-title">${item.video_name || item.video_id}</a>
+                                    <div class="user-list-meta">收藏时间: ${new Date(item.created_at).toLocaleDateString()}</div>
+                                </div>
+                                <button class="user-list-action" onclick="removeFavoriteItem('${item.video_id}')" title="取消收藏">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    content.innerHTML = '<div class="empty-text" style="padding:20px;text-align:center;">暂无收藏</div>';
+                }
+            } catch (error) {
+                content.innerHTML = '<div class="empty-text" style="padding:20px;text-align:center;">加载失败</div>';
+            }
+        }
+
+        async function removeFavoriteItem(videoId) {
+            if (!confirm('确定取消收藏该影片吗？')) return;
+            try {
+                const result = await UserAPI.removeFavorite(videoId);
+                if (result.success) {
+                    showToast('已取消收藏', 'success');
+                    showFavorites(); // Refresh list
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            } catch (error) {
+                showToast('操作失败', 'error');
+            }
+        }
+
+        async function showHistory(e) {
+            if (e) e.preventDefault();
+            const content = document.getElementById('userContent');
+            content.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+            
+            try {
+                const result = await UserAPI.getHistory();
+                if (result.success && result.data && result.data.length > 0) {
+                    let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">';
+                    html += '<span style="font-size:14px;color:var(--text-secondary);">最近观看记录</span>';
+                    html += '<button class="btn btn-sm btn-secondary" onclick="clearHistoryRecords()"><i class="fas fa-trash-alt"></i> 清空记录</button>';
+                    html += '</div>';
+                    html += '<div class="user-video-list">';
+                    result.data.forEach(item => {
+                        html += `
+                            <div class="user-list-item">
+                                <a href="detail.html?id=${item.video_id}" class="user-list-thumb">
+                                    <img src="${API.getProxyImageUrl(item.video_pic)}" alt="${item.video_name}" onerror="this.style.display='none'">
+                                </a>
+                                <div class="user-list-info">
+                                    <a href="detail.html?id=${item.video_id}" class="user-list-title">${item.video_name || item.video_id}</a>
+                                    <div class="user-list-meta">看到: ${item.episode_name || '未知集数'} | ${new Date(item.created_at).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    content.innerHTML = '<div class="empty-text" style="padding:20px;text-align:center;">暂无观看记录</div>';
+                }
+            } catch (error) {
+                content.innerHTML = '<div class="empty-text" style="padding:20px;text-align:center;">加载失败</div>';
+            }
+        }
+
+        async function clearHistoryRecords() {
+            if (!confirm('确定要清空所有观看记录吗？此操作不可恢复。')) return;
+            try {
+                const result = await UserAPI.request('clear_history');
+                if (result.success) {
+                    showToast('记录已清空', 'success');
+                    showHistory(); // Refresh list
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            } catch (error) {
+                showToast('操作失败', 'error');
+            }
+        }
+
+        async function showProfile(e) {
+            if (e) e.preventDefault();
+            const content = document.getElementById('userContent');
+            content.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+            
+            try {
+                const result = await UserAPI.getProfile();
+                if (result.success && result.data) {
+                    const user = result.data;
+                    const avatarUrl = user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=random&color=fff&size=80';
+                    content.innerHTML = `
+                        <div class="profile-form">
+                            <div class="form-group" style="text-align:center;margin-bottom:20px;">
+                                <div class="user-avatar" style="width:80px;height:80px;margin:0 auto;margin-bottom:10px;position:relative;">
+                                    <img id="profileAvatarPreview" src="${avatarUrl}" alt="头像" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                    <input type="file" id="avatarInput" accept="image/*" onchange="previewAvatar(this)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;">
+                                    <div style="position:absolute;bottom:0;right:0;background:var(--primary-color);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;pointer-events:none;">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                </div>
+                                <div style="color:var(--text-secondary);font-size:12px;">点击更换头像 (限制2MB)</div>
+                                <input type="hidden" id="profileAvatarBase64" value="">
+                            </div>
+                            <div class="form-group">
+                                <label>用户名</label>
+                                <input type="text" id="profileUsername" value="${user.username}" disabled style="background:var(--bg-color);cursor:not-allowed;">
+                            </div>
+                            <div class="form-group">
+                                <label>昵称</label>
+                                <input type="text" id="profileNickname" value="${user.nickname || ''}" placeholder="请输入昵称">
+                            </div>
+                            <div class="form-group">
+                                <label>邮箱</label>
+                                <input type="email" id="profileEmail" value="${user.email || ''}" disabled style="background:var(--bg-color);cursor:not-allowed;">
+                            </div>
+                            <div class="form-group">
+                                <label>个人简介</label>
+                                <textarea id="profileBio" placeholder="介绍一下自己吧..." style="height:100px;">${user.bio || ''}</textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" onclick="updateProfile()" style="width:100%;">保存修改</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = '<div class="empty-text" style="padding:20px;text-align:center;">加载失败</div>';
+                }
+            } catch (error) {
+                content.innerHTML = '<div class="empty-text" style="padding:20px;text-align:center;">加载失败</div>';
+            }
+        }
+
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('头像图片不能大于2MB', 'error');
+                    input.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profileAvatarPreview').src = e.target.result;
+                    document.getElementById('profileAvatarBase64').value = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function updateProfile() {
+            const nickname = document.getElementById('profileNickname').value.trim();
+            const bio = document.getElementById('profileBio').value.trim();
+            const avatar = document.getElementById('profileAvatarBase64').value;
+            
+            try {
+                const result = await UserAPI.updateProfile(nickname, bio, avatar);
+                if (result.success) {
+                    showToast('更新成功', 'success');
+                    currentUser = result.data;
+                    updateUserUI(); // update the header UI if needed
+                    setTimeout(() => {
+                        showProfile();
+                    }, 500);
+                } else {
+                    showToast(result.message || '更新失败', 'error');
+                }
+            } catch (error) {
+                showToast('更新失败，请稍后重试', 'error');
+            }
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 数据源管理功能
+        function showAddSource() {
+            editingSourceId = null;
+            document.getElementById('sourceModalTitle').textContent = '添加数据源';
+            document.getElementById('sourceId').value = '';
+            document.getElementById('sourceName').value = '';
+            document.getElementById('sourceUrl').value = '';
+            document.getElementById('sourceActive').checked = true;
+            document.getElementById('sourceModal').classList.add('active');
+        }
+
+        function closeSourceModal() {
+            document.getElementById('sourceModal').classList.remove('active');
+        }
+
+        function editSource(id, name, url, isActive) {
+            editingSourceId = id;
+            document.getElementById('sourceModalTitle').textContent = '编辑数据源';
+            document.getElementById('sourceId').value = id;
+            document.getElementById('sourceName').value = name;
+            document.getElementById('sourceUrl').value = url;
+            document.getElementById('sourceActive').checked = isActive;
+            document.getElementById('sourceModal').classList.add('active');
+        }
+
+        async function deleteSource(id) {
+            if (!confirm('确定要删除这个数据源吗？')) return;
+
+            try {
+                const result = await fetch(`/api/sources/${id}`, {
+                    method: 'DELETE'
+                });
+                const data = await result.json();
+                
+                if (data.success) {
+                    showToast('删除成功', 'success');
+                    await renderSourceList();
+                } else {
+                    showToast(data.message || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('删除失败：' + error.message, 'error');
+            }
+        }
+
+        async function renderSourceList() {
+            await API.loadSources();
+            const sources = API.getSources();
+            const sourceList = document.getElementById('sourceList');
+            
+            if (sources.length === 0) {
+                sourceList.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">暂无数据源，请点击上方按钮添加</p>';
+                return;
+            }
+            
+            let html = '';
+            sources.forEach(source => {
+                const isActive = source.is_active;
+                html += `
+                    <div class="source-item ${isActive ? 'active' : ''}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; background: ${isActive ? 'rgba(70, 211, 105, 0.1)' : 'var(--card-bg)'};">
+                        <div class="source-info" style="flex: 1;">
+                            <div class="source-name" style="font-weight: 600; margin-bottom: 4px;">${source.name} ${isActive ? '<span style="color: var(--success-color); font-size: 12px; margin-left: 8px;">(当前使用)</span>' : ''}</div>
+                            <div class="source-url" style="color: var(--text-secondary); font-size: 13px;">${source.url}</div>
+                        </div>
+                        <div class="source-actions" style="display: flex; gap: 8px;">
+                            ${!isActive ? `<button class="btn btn-sm btn-secondary" onclick="selectSource(${source.id})">切换</button>` : ''}
+                            <button class="btn btn-sm btn-secondary" onclick="editSource(${source.id}, '${source.name.replace(/'/g, "\\'")}', '${source.url.replace(/'/g, "\\'")}', ${source.is_active})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSource(${source.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            sourceList.innerHTML = html;
+        }
+
+        async function selectSource(id) {
+            const result = await API.setActiveSource(id);
+            if (result.success) {
+                showToast('已切换数据源', 'success');
+                currentPage = 1;
+                currentType = '';
+                currentKeyword = '';
+                await renderSourceList();
+                await loadCategories();
+                await loadVideos();
+            } else {
+                showToast(result.message || '切换失败', 'error');
+            }
+        }
+
+        // 绑定数据源表单事件
+        document.getElementById('sourceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('sourceName').value.trim();
+            const url = document.getElementById('sourceUrl').value.trim();
+            const is_active = document.getElementById('sourceActive').checked;
+
+            let result;
+            try {
+                if (editingSourceId) {
+                    result = await fetch(`/api/sources/${editingSourceId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, url, is_active })
+                    });
+                } else {
+                    result = await fetch('/api/sources', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, url, is_active })
+                    });
+                }
+                
+                const data = await result.json();
+                
+                if (data.success) {
+                    closeSourceModal();
+                    await renderSourceList();
+                    showToast(editingSourceId ? '更新成功' : '添加成功', 'success');
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            } catch (error) {
+                showToast('操作失败：' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('cancelSourceBtn').addEventListener('click', closeSourceModal);
+
+        // 反馈功能
+        function openFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('active');
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('active');
+            document.getElementById('feedbackForm').reset();
+        }
+
+        document.getElementById('feedbackBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            openFeedbackModal();
+        });
+
+        document.getElementById('closeFeedbackModal').addEventListener('click', closeFeedbackModal);
+        document.getElementById('cancelFeedbackBtn').addEventListener('click', closeFeedbackModal);
+        document.getElementById('feedbackModal').addEventListener('click', (e) => {
+            if (e.target.id === 'feedbackModal') closeFeedbackModal();
+        });
+
+        document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const type = document.getElementById('feedbackType').value;
+            const contact = document.getElementById('feedbackContact').value.trim();
+            const content = document.getElementById('feedbackContent').value.trim();
+
+            if (!content) {
+                showToast('请填写反馈内容', 'error');
+                return;
+            }
+
+            try {
+                const result = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser ? currentUser.id : null,
+                        username: currentUser ? currentUser.username : '匿名',
+                        contact,
+                        type,
+                        content
+                    })
+                });
+                const data = await result.json();
+
+                if (data.success) {
+                    showToast('反馈提交成功，感谢您的反馈！', 'success');
+                    closeFeedbackModal();
+                } else {
+                    showToast(data.message || '提交失败', 'error');
+                }
+            } catch (error) {
+                showToast('提交失败：' + error.message, 'error');
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

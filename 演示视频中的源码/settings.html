@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - 影视天堂</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .settings-page {
+            min-height: 100vh;
+        }
+        
+        .settings-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .settings-back:hover {
+            color: var(--primary-color);
+        }
+        
+        .settings-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .settings-main {
+            padding-top: 70px;
+            padding-bottom: 40px;
+        }
+        
+        .settings-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .settings-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .settings-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .source-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-group label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 15px;
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .form-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .source-item-card {
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .source-item-card.active {
+            border-color: var(--primary-color);
+        }
+        
+        .source-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .source-item-name {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .source-item-name .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        .source-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .source-item-actions button {
+            padding: 6px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+        
+        .source-item-url {
+            font-size: 12px;
+            color: var(--text-muted);
+            word-break: break-all;
+            background: var(--bg-dark);
+            padding: 8px 10px;
+            border-radius: 4px;
+        }
+        
+        .test-result {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+        
+        .test-result.success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .test-result.error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        .help-section {
+            background: var(--bg-hover);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .help-section h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+        
+        .help-section p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+        
+        .help-section code {
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .settings-header {
+                padding: 12px 15px;
+            }
+            
+            .settings-main {
+                padding: 70px 15px 30px;
+            }
+            
+            .settings-card {
+                padding: 15px;
+            }
+            
+            .source-item-card {
+                padding: 12px;
+            }
+            
+            .source-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .source-item-actions {
+                width: 100%;
+            }
+            
+            .source-item-actions button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body class="settings-page">
+    <header class="settings-header">
+        <button class="settings-back" onclick="goBack()">
+            <span>←</span>
+            <span>返回</span>
+        </button>
+        <span class="settings-title">数据源设置</span>
+        <div style="width: 60px;"></div>
+    </header>
+
+    <main class="settings-main">
+        <div class="container">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="settings-card-title">
+                        <span>📡</span>
+                        <span>添加数据源</span>
+                    </h2>
+                </div>
+                
+                <div class="source-form">
+                    <div class="form-group">
+                        <label>数据源名称</label>
+                        <input type="text" id="sourceName" placeholder="例如: 资源站1">
+                    </div>
+                    <div class="form-group">
+                        <label>接口地址</label>
+                        <input type="text" id="sourceUrl" placeholder="例如: https://api.example.com/api.php/provide/vod/">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="testSource()">测试连接</button>
+                        <button class="btn-primary" onclick="addSource()">添加数据源</button>
+                    </div>
+                </div>
+                
+                <div id="testResult"></div>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="settings-card-title">
+                        <span>📋</span>
+                        <span>已配置的数据源</span>
+                    </h2>
+                </div>
+                
+                <div id="sourceList"></div>
+            </div>
+
+            <div class="settings-card">
+                <div class="help-section">
+                    <h3>💡 使用说明</h3>
+                    <p>1. 数据源名称: 给数据源起一个容易识别的名字，如"资源站1"、"高清资源"等</p>
+                    <p>2. 接口地址: 填写CMS V10格式的API地址，通常以 <code>/api.php/provide/vod/</code> 结尾</p>
+                    <p>3. 添加数据源后，点击"测试连接"验证是否可用</p>
+                    <p>4. 在首页的数据源下拉框中可以切换不同的数据源</p>
+                    <p>5. 数据源配置保存在浏览器本地，清除浏览器数据会丢失配置</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        let editingId = null;
+
+        function init() {
+            loadSourceList();
+        }
+
+        function loadSourceList() {
+            const sources = SourceManager.getSources();
+            const currentSource = SourceManager.getCurrentSource();
+            const container = document.getElementById('sourceList');
+            
+            if (sources.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">暂无数据源，请添加</p>';
+                return;
+            }
+
+            container.innerHTML = sources.map(source => `
+                <div class="source-item-card ${source.id === currentSource.id ? 'active' : ''}">
+                    <div class="source-item-header">
+                        <div class="source-item-name">
+                            ${source.name}
+                            ${source.id === currentSource.id ? '<span class="badge">当前使用</span>' : ''}
+                        </div>
+                        <div class="source-item-actions">
+                            <button class="btn-secondary" onclick="editSource(${source.id})">编辑</button>
+                            <button class="btn-success" onclick="useSource(${source.id})">使用</button>
+                            <button class="btn-danger" onclick="deleteSource(${source.id})">删除</button>
+                        </div>
+                    </div>
+                    <div class="source-item-url">${source.url}</div>
+                </div>
+            `).join('');
+        }
+
+        async function testSource() {
+            const name = document.getElementById('sourceName').value.trim();
+            const url = document.getElementById('sourceUrl').value.trim();
+            const resultDiv = document.getElementById('testResult');
+            
+            if (!url) {
+                resultDiv.innerHTML = '<div class="test-result error">请输入接口地址</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="test-result">测试中...</div>';
+            
+            try {
+                const proxyUrl = `/api/proxy?url=${encodeURIComponent(url + '?ac=list&pg=1')}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                if (data.code === 1 || data.list) {
+                    const total = data.total || (data.list ? data.list.length : 0);
+                    const categories = data.class ? data.class.length : 0;
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">
+                            ✓ 连接成功！<br>
+                            数据总量: ${total} 条<br>
+                            分类数量: ${categories} 个
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="test-result error">✗ 接口返回格式不正确</div>`;
+                }
+            } catch (error) {
+                console.error('测试失败:', error);
+                resultDiv.innerHTML = `<div class="test-result error">✗ 连接失败: ${error.message}</div>`;
+            }
+        }
+
+        function addSource() {
+            const name = document.getElementById('sourceName').value.trim();
+            const url = document.getElementById('sourceUrl').value.trim();
+            
+            if (!name) {
+                UI.showToast('请输入数据源名称', 'error');
+                return;
+            }
+            
+            if (!url) {
+                UI.showToast('请输入接口地址', 'error');
+                return;
+            }
+
+            let finalUrl = url;
+            if (!finalUrl.endsWith('/')) {
+                finalUrl += '/';
+            }
+
+            if (editingId) {
+                SourceManager.updateSource(editingId, name, finalUrl);
+                UI.showToast('数据源已更新', 'success');
+                editingId = null;
+                document.querySelector('.btn-primary').textContent = '添加数据源';
+            } else {
+                SourceManager.addSource(name, finalUrl);
+                UI.showToast('数据源添加成功', 'success');
+            }
+
+            document.getElementById('sourceName').value = '';
+            document.getElementById('sourceUrl').value = '';
+            document.getElementById('testResult').innerHTML = '';
+            
+            loadSourceList();
+        }
+
+        function editSource(id) {
+            const sources = SourceManager.getSources();
+            const source = sources.find(s => s.id === id);
+            
+            if (source) {
+                document.getElementById('sourceName').value = source.name;
+                document.getElementById('sourceUrl').value = source.url;
+                editingId = id;
+                document.querySelector('.btn-primary').textContent = '保存修改';
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function useSource(id) {
+            SourceManager.setCurrentSource(id);
+            UI.showToast('已切换到此数据源', 'success');
+            loadSourceList();
+        }
+
+        function deleteSource(id) {
+            if (confirm('确定要删除这个数据源吗？')) {
+                const success = SourceManager.deleteSource(id);
+                if (success) {
+                    UI.showToast('数据源已删除', 'success');
+                    loadSourceList();
+                } else {
+                    UI.showToast('至少需要保留一个数据源', 'error');
+                }
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>

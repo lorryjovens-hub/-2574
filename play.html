@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="keywords" id="metaKeywords" content="影视,电影,电视剧,综艺,动漫,在线观看">
+    <meta name="description" id="metaDescription" content="影视爆米花 - 免费在线观看最新电影、电视剧、综艺、动漫">
+    <title id="pageTitle">播放中 - 影视爆米花</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        .player-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            padding: 20px 15px 15px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-wrapper:hover .player-controls {
+            opacity: 1;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .control-left, .control-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            padding: 5px;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .time-display {
+            color: white;
+            font-size: 13px;
+        }
+        
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .center-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: rgba(229, 9, 20, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .video-wrapper:hover .center-play {
+            opacity: 1;
+        }
+        
+        .center-play:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .player-controls {
+                opacity: 1;
+                padding: 15px 10px 10px;
+            }
+            
+            .control-btn {
+                font-size: 16px;
+            }
+            
+            .volume-slider {
+                display: none;
+            }
+            
+            .center-play {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo">
+            <i class="fas fa-film"></i>
+            <span id="siteNameDisplay">影视爆米花</span>
+        </a>
+        <div class="header-right">
+            <button class="settings-btn" id="userBtn">
+                <i class="fas fa-user"></i>
+                <span id="userBtnText">登录</span>
+            </button>
+            <a href="#" class="settings-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i>
+                <span>返回详情</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="player-page">
+        <div class="player-container">
+            <div class="video-wrapper" id="videoWrapper">
+                <video id="videoPlayer" playsinline></video>
+                <div class="center-play" id="centerPlay">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="player-controls">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-bar-fill" id="progressFill"></div>
+                    </div>
+                    <div class="control-buttons">
+                        <div class="control-left">
+                            <button class="control-btn" id="playPauseBtn">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="control-btn" id="prevBtn">
+                                <i class="fas fa-step-backward"></i>
+                            </button>
+                            <button class="control-btn" id="nextBtn">
+                                <i class="fas fa-step-forward"></i>
+                            </button>
+                            <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                        </div>
+                        <div class="control-right">
+                            <button class="control-btn" id="volumeBtn">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.1" value="1">
+                            <button class="control-btn" id="fullscreenBtn">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="player-info">
+            <a href="#" class="back-btn" id="backBtn2">
+                <i class="fas fa-arrow-left"></i> 返回详情
+            </a>
+            <h1 class="player-title" id="playerTitle">加载中...</h1>
+            <div class="player-episode" id="playerEpisode"></div>
+            
+            <div class="source-selector" id="sourceSelector" style="margin-bottom: 15px;"></div>
+            
+            <div class="player-episodes">
+                <h3 class="section-title" style="font-size: 16px;">选集</h3>
+                <div class="episode-grid" id="episodeGrid">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="authTitle">登录</h3>
+                <button class="modal-close" id="closeAuthModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-tab="login">登录</div>
+                    <div class="auth-tab" data-tab="register">注册</div>
+                </div>
+                <div class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="loginUsername" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="handleLogin()">登录</button>
+                    </div>
+                </div>
+                <div class="auth-form" id="registerForm" style="display:none;">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="registerUsername" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" id="registerEmail" placeholder="请输入邮箱（选填）">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="registerPassword" placeholder="请输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label>确认密码</label>
+                        <input type="password" id="registerConfirmPassword" placeholder="请再次输入密码">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="handleRegister()">注册</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const API_BASE = '/api/user.php';
+        let videoId = null;
+        let sourceIndex = 0;
+        let episodeIndex = 0;
+        let videoData = null;
+        let playSources = [];
+        let hls = null;
+        let video = null;
+        let currentUser = null;
+        let siteConfig = null;
+
+        async function init() {
+            await loadSiteConfig();
+            await checkLogin();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            videoId = urlParams.get('id');
+            sourceIndex = parseInt(urlParams.get('source')) || 0;
+            episodeIndex = parseInt(urlParams.get('ep')) || 0;
+            
+            if (!videoId) {
+                showError('缺少视频ID参数');
+                return;
+            }
+            
+            video = document.getElementById('videoPlayer');
+            setupPlayerControls();
+            setupAuthEvents();
+            loadVideoDetail();
+        }
+
+        async function loadSiteConfig() {
+            try {
+                const response = await fetch('api/config');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    siteConfig = result.data;
+                    
+                    if (siteConfig.site_name) {
+                        document.getElementById('siteNameDisplay').textContent = siteConfig.site_name;
+                    }
+                    
+                    if (siteConfig.site_keywords) {
+                        document.getElementById('metaKeywords').content = siteConfig.site_keywords;
+                    }
+                    
+                    if (siteConfig.site_description) {
+                        document.getElementById('metaDescription').content = siteConfig.site_description;
+                    }
+                }
+            } catch (error) {
+                console.error('加载网站配置失败:', error);
+            }
+        }
+
+        async function checkLogin() {
+            try {
+                const response = await fetch(`${API_BASE}?action=check`);
+                const data = await response.json();
+                if (data.success && data.user) {
+                    currentUser = data.user;
+                    updateUserButton();
+                }
+            } catch (e) {
+                console.log('Not logged in');
+            }
+        }
+
+        function updateUserButton() {
+            const btn = document.getElementById('userBtn');
+            const text = document.getElementById('userBtnText');
+            if (currentUser) {
+                text.textContent = currentUser.username;
+                btn.onclick = () => window.location.href = `detail.html?id=${videoId}`;
+            } else {
+                text.textContent = '登录';
+                btn.onclick = () => showAuthModal();
+            }
+        }
+
+        function setupAuthEvents() {
+            document.getElementById('closeAuthModal').onclick = () => {
+                document.getElementById('authModal').classList.remove('active');
+            };
+            
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.onclick = () => {
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const form = tab.dataset.tab;
+                    document.getElementById('loginForm').style.display = form === 'login' ? 'block' : 'none';
+                    document.getElementById('registerForm').style.display = form === 'register' ? 'block' : 'none';
+                    document.getElementById('authTitle').textContent = form === 'login' ? '登录' : '注册';
+                };
+            });
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showToast('请填写用户名和密码', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'login', username, password })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUserButton();
+                    document.getElementById('authModal').classList.remove('active');
+                    showToast('登录成功', 'success');
+                } else {
+                    showToast(data.message || '登录失败', 'error');
+                }
+            } catch (e) {
+                showToast('登录失败，请稍后重试', 'error');
+            }
+        }
+
+        async function handleRegister() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            if (!username || !password) {
+                showToast('请填写用户名和密码', 'error');
+                return;
+            }
+            if (password !== confirmPassword) {
+                showToast('两次密码不一致', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showToast('密码至少6位', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'register', username, email, password })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('注册成功，请登录', 'success');
+                    document.querySelector('.auth-tab[data-tab="login"]').click();
+                } else {
+                    showToast(data.message || '注册失败', 'error');
+                }
+            } catch (e) {
+                showToast('注册失败，请稍后重试', 'error');
+            }
+        }
+
+        async function saveWatchHistory(episodeName) {
+            if (!currentUser || !videoData) return;
+            
+            try {
+                await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add_history',
+                        video_id: videoId,
+                        video_name: videoData.vod_name,
+                        video_pic: videoData.vod_pic,
+                        episode_name: episodeName
+                    })
+                });
+            } catch (e) {
+                console.log('Failed to save history');
+            }
+        }
+
+        function setupPlayerControls() {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const centerPlay = document.getElementById('centerPlay');
+            const progressBar = document.getElementById('progressBar');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const volumeBtn = document.getElementById('volumeBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            playPauseBtn.addEventListener('click', togglePlay);
+            centerPlay.addEventListener('click', togglePlay);
+            
+            video.addEventListener('play', () => {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                centerPlay.innerHTML = '<i class="fas fa-pause"></i>';
+            });
+            
+            video.addEventListener('pause', () => {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                centerPlay.innerHTML = '<i class="fas fa-play"></i>';
+            });
+            
+            video.addEventListener('timeupdate', updateProgress);
+            video.addEventListener('loadedmetadata', updateTimeDisplay);
+            
+            progressBar.addEventListener('click', seek);
+            
+            volumeSlider.addEventListener('input', (e) => {
+                video.volume = e.target.value;
+                updateVolumeIcon();
+            });
+            
+            volumeBtn.addEventListener('click', () => {
+                video.muted = !video.muted;
+                updateVolumeIcon();
+            });
+            
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            prevBtn.addEventListener('click', playPrev);
+            nextBtn.addEventListener('click', playNext);
+            
+            document.addEventListener('keydown', handleKeyboard);
+        }
+
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+
+        function updateProgress() {
+            const progress = (video.currentTime / video.duration) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            updateTimeDisplay();
+        }
+
+        function updateTimeDisplay() {
+            const current = formatTime(video.currentTime);
+            const duration = formatTime(video.duration);
+            document.getElementById('timeDisplay').textContent = `${current} / ${duration}`;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function seek(e) {
+            const rect = e.target.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        }
+
+        function updateVolumeIcon() {
+            const volumeBtn = document.getElementById('volumeBtn');
+            if (video.muted || video.volume === 0) {
+                volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else if (video.volume < 0.5) {
+                volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
+            } else {
+                volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+        }
+
+        function toggleFullscreen() {
+            const wrapper = document.getElementById('videoWrapper');
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                wrapper.requestFullscreen();
+            }
+        }
+
+        function handleKeyboard(e) {
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowLeft':
+                    video.currentTime -= 10;
+                    break;
+                case 'ArrowRight':
+                    video.currentTime += 10;
+                    break;
+                case 'ArrowUp':
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    document.getElementById('volumeSlider').value = video.volume;
+                    break;
+                case 'ArrowDown':
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    document.getElementById('volumeSlider').value = video.volume;
+                    break;
+                case 'f':
+                    toggleFullscreen();
+                    break;
+            }
+        }
+
+        function playPrev() {
+            if (episodeIndex > 0) {
+                episodeIndex--;
+                playEpisode();
+            } else {
+                showToast('已经是第一集了');
+            }
+        }
+
+        function playNext() {
+            const source = playSources[sourceIndex];
+            if (source && episodeIndex < source.episodes.length - 1) {
+                episodeIndex++;
+                playEpisode();
+            } else {
+                showToast('已经是最后一集了');
+            }
+        }
+
+        async function loadVideoDetail() {
+            try {
+                const data = await API.getVideoDetail(videoId);
+                
+                if (data.code === 1 && data.list && data.list.length > 0) {
+                    videoData = data.list[0];
+                    parseAndRenderEpisodes();
+                    playEpisode();
+                } else {
+                    showError('未找到视频信息');
+                }
+            } catch (error) {
+                showError('加载失败: ' + error.message);
+            }
+        }
+
+        function parseAndRenderEpisodes() {
+            playSources = API.parsePlayUrl(videoData.vod_play_from, videoData.vod_play_url);
+            
+            if (playSources.length === 0) {
+                showError('暂无播放源');
+                return;
+            }
+            
+            if (sourceIndex >= playSources.length) {
+                sourceIndex = 0;
+            }
+            
+            const source = playSources[sourceIndex];
+            if (episodeIndex >= source.episodes.length) {
+                episodeIndex = 0;
+            }
+            
+            renderSourceSelector();
+            renderEpisodes();
+            updateBackLinks();
+        }
+
+        function updateBackLinks() {
+            const backUrl = `detail.html?id=${videoId}`;
+            document.getElementById('backBtn').href = backUrl;
+            document.getElementById('backBtn2').href = backUrl;
+        }
+
+        function renderSourceSelector() {
+            const selector = document.getElementById('sourceSelector');
+            
+            if (playSources.length <= 1) {
+                selector.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            playSources.forEach((source, index) => {
+                html += `<div class="source-tab ${index === sourceIndex ? 'active' : ''}" onclick="switchSource(${index})">${source.name}</div>`;
+            });
+            
+            selector.innerHTML = html;
+            selector.style.display = 'flex';
+        }
+
+        function switchSource(index) {
+            sourceIndex = index;
+            episodeIndex = 0;
+            renderSourceSelector();
+            renderEpisodes();
+            playEpisode();
+        }
+
+        function renderEpisodes() {
+            const grid = document.getElementById('episodeGrid');
+            const source = playSources[sourceIndex];
+            
+            if (!source || !source.episodes || source.episodes.length === 0) {
+                grid.innerHTML = '<div class="empty-text">暂无剧集</div>';
+                return;
+            }
+            
+            let html = '';
+            source.episodes.forEach((ep, index) => {
+                html += `<div class="episode-item ${index === episodeIndex ? 'active' : ''}" onclick="selectEpisode(${index})">${ep.name}</div>`;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        function selectEpisode(index) {
+            episodeIndex = index;
+            renderEpisodes();
+            playEpisode();
+        }
+
+        function playEpisode() {
+            const source = playSources[sourceIndex];
+            if (!source || !source.episodes[episodeIndex]) {
+                showToast('无法播放此剧集', 'error');
+                return;
+            }
+            
+            const episode = source.episodes[episodeIndex];
+            const videoUrl = episode.url;
+            
+            document.getElementById('playerTitle').textContent = videoData.vod_name;
+            document.getElementById('playerEpisode').textContent = `正在播放: ${episode.name}`;
+            document.title = `${videoData.vod_name} - ${episode.name} - ${siteConfig?.site_name || '影视爆米花'}`;
+            
+            renderEpisodes();
+            
+            saveWatchHistory(episode.name);
+            
+            if (Hls.isSupported() && videoUrl.includes('.m3u8')) {
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                hls = new Hls({
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 60
+                });
+                
+                const proxyUrl = API.getProxyM3u8Url(videoUrl);
+                hls.loadSource(proxyUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(e => {
+                        console.log('自动播放失败，需要用户交互');
+                    });
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        showToast('视频加载失败，请尝试其他播放源', 'error');
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl') && videoUrl.includes('.m3u8')) {
+                video.src = API.getProxyM3u8Url(videoUrl);
+                video.play().catch(e => {
+                    console.log('自动播放失败');
+                });
+            } else {
+                video.src = videoUrl;
+                video.play().catch(e => {
+                    console.log('自动播放失败');
+                });
+            }
+            
+            history.replaceState(null, '', `play.html?id=${videoId}&source=${sourceIndex}&ep=${episodeIndex}`);
+        }
+
+        function showError(message) {
+            document.querySelector('.player-page').innerHTML = `
+                <div class="empty-state" style="padding: 100px 20px;">
+                    <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="empty-text">${message}</div>
+                    <a href="index.html" class="back-btn" style="margin-top: 20px;">
+                        <i class="fas fa-arrow-left"></i> 返回首页
+                    </a>
+                </div>
+            `;
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
