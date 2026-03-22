@@ -80,7 +80,7 @@ const API = {
         }
         
         const targetUrl = this.buildApiUrl(this._activeSource.url, params);
-        const proxyUrl = `${this.proxyUrl}/proxy?url=${encodeURIComponent(targetUrl)}`;
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
         
         console.log('请求API:', targetUrl);
         
@@ -249,12 +249,12 @@ const API = {
     getProxyImageUrl(url) {
         if (!url) return '';
         if (url.startsWith('data:')) return url;
-        return `${this.proxyUrl}/proxy/image?url=${encodeURIComponent(url)}`;
+        return `/api/proxy/image?url=${encodeURIComponent(url)}`;
     },
     
     getProxyM3u8Url(url) {
         if (!url) return '';
-        return `${this.proxyUrl}/proxy/m3u8?url=${encodeURIComponent(url)}`;
+        return `/api/proxy/m3u8?url=${encodeURIComponent(url)}`;
     }
 };
 
